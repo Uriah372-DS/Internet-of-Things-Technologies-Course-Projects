@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
             ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},0);
         }
 
-            if (savedInstanceState == null)
+        if (savedInstanceState == null)
             getSupportFragmentManager().beginTransaction().add(R.id.fragment, new DevicesFragment(), "devices").commit();
         else
             onBackStackChanged();

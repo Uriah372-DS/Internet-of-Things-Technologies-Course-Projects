@@ -59,7 +59,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private String newline = TextUtil.newline_crlf;
 
     LineChart mpLineChart;
-    LineDataSet lineDataSet1;
+    LineDataSet lineDataSetX;
+    LineDataSet lineDataSetY;
+    LineDataSet lineDataSetZ;
     ArrayList<ILineDataSet> dataSets = new ArrayList<>();
     LineData data;
 
@@ -157,9 +159,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
-        lineDataSet1 =  new LineDataSet(emptyDataValues(), "temperature");
+        lineDataSetX =  new LineDataSet(emptyDataValues(), "ACC X");
+        lineDataSetY =  new LineDataSet(emptyDataValues(), "ACC Y");
+        lineDataSetZ =  new LineDataSet(emptyDataValues(), "ACC Z");
 
-        dataSets.add(lineDataSet1);
+        dataSets.add(lineDataSetX);
+        dataSets.add(lineDataSetY);
+        dataSets.add(lineDataSetZ);
         data = new LineData(dataSets);
         mpLineChart.setData(data);
         mpLineChart.invalidate();
@@ -292,36 +298,44 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 String msg_to_save = msg;
                 msg_to_save = msg.replace(TextUtil.newline_crlf, TextUtil.emptyString);
                 // check message length
-                if (msg_to_save.length() > 1){
-                // split message string by ',' char
-                String[] parts = msg_to_save.split(",");
-                // function to trim blank spaces
-                parts = clean_str(parts);
+                if (msg_to_save.length() > 1) {
+                    // split message string by ',' char
+                    String[] parts = msg_to_save.split(",");
+                    // function to trim blank spaces
+                    parts = clean_str(parts);
+                    float xValue = Float.valueOf(parts[0]);
+                    float yValue = Float.valueOf(parts[1]);
+                    float zValue = Float.valueOf(parts[2]);
+                    float time = Float.valueOf(parts[3]);
 
-                // saving data to csv
-                try {
+                    // saving data to csv
+                    try {
 
-                    // create new csv unless file already exists
-                    File file = new File("/sdcard/csv_dir/");
-                    file.mkdirs();
-                    String csv = "/sdcard/csv_dir/data.csv";
-                    CSVWriter csvWriter = new CSVWriter(new FileWriter(csv,true));
+                        // create new csv unless file already exists
+                        File file = new File("/sdcard/csv_dir/");
+                        file.mkdirs();
+                        String csv = "/sdcard/csv_dir/data.csv";
+                        CSVWriter csvWriter = new CSVWriter(new FileWriter(csv,true));
 
-                    // parse string values, in this case [0] is tmp & [1] is count (t)
-                    String row[]= new String[]{parts[0],parts[1]};
-                    csvWriter.writeNext(row);
-                    csvWriter.close();
+                        // parse string values, in this case [0] is tmp & [1] is count (t)
+                        String[] row = new String[]{parts[2], parts[1], parts[0], String.valueOf(System.currentTimeMillis())};
+                        csvWriter.writeNext(row);
+                        csvWriter.close();
 
-                    // add received values to line dataset for plotting the linechart
-                    data.addEntry(new Entry(Integer.valueOf(parts[1]),Float.parseFloat(parts[0])),0);
-                    lineDataSet1.notifyDataSetChanged(); // let the data know a dataSet changed
-                    mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
-                    mpLineChart.invalidate(); // refresh
+                        // add received values to line dataset for plotting the lineChart
+                        data.addEntry(new Entry(time, xValue),0);
+                        data.addEntry(new Entry(time, yValue),1);
+                        data.addEntry(new Entry(time, zValue),2);
+                        lineDataSetX.notifyDataSetChanged(); // let the data know a dataSet changed
+                        lineDataSetY.notifyDataSetChanged(); // let the data know a dataSet changed
+                        lineDataSetZ.notifyDataSetChanged(); // let the data know a dataSet changed
+                        mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
+                        mpLineChart.invalidate(); // refresh
 
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }}
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
                 // send msg to function that saves it to csv

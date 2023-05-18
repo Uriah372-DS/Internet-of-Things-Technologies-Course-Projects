@@ -1,0 +1,8 @@
+NAME:,csv_format.csv,,
+EXPERIMENT TIME:,11/05/2023 15:00,,
+ACTIVITY TYPE:,Running,,
+COUNT OF ACTUAL STEPS:,150,,
+,,,
+Time [sec],ACC X,ACC Y,ACC Z
+0,0,0,9.8
+0.016666667,0,0,9.8
