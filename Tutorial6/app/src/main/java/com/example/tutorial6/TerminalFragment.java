@@ -23,7 +23,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,12 +41,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Objects;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -59,10 +56,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     // added experiment variables:
     private ArrayList<String[]> experimentData;
     private boolean recording = false;
-    private boolean running = false;
+    private final boolean running = false;
     private int steps;
     private String fileName;
-    private SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     private TextView receiveText;
     private TextView sendText;
@@ -179,7 +176,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View sendBtn = view.findViewById(R.id.send_btn);
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
-        mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
+        mpLineChart = view.findViewById(R.id.line_chart);
         lineDataSetX =  new LineDataSet(emptyDataValues(), "ACC X");
         lineDataSetY =  new LineDataSet(emptyDataValues(), "ACC Y");
         lineDataSetZ =  new LineDataSet(emptyDataValues(), "ACC Z");
@@ -194,64 +191,37 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         mpLineChart.setData(data);
         mpLineChart.invalidate();
 
-        Button buttonClear = (Button) view.findViewById(R.id.button1);
-        Button buttonCsvShow = (Button) view.findViewById(R.id.button2);
-        Button buttonStart = (Button) view.findViewById(R.id.start_btn);
-        Button buttonStop = (Button) view.findViewById(R.id.stop_btn);
-        Button buttonSave = (Button) view.findViewById(R.id.save_btn);
-        Button buttonReset = (Button) view.findViewById(R.id.reset_btn);
+        Button buttonClear = view.findViewById(R.id.button1);
+        Button buttonCsvShow = view.findViewById(R.id.button2);
+        Button buttonStart = view.findViewById(R.id.start_btn);
+        Button buttonStop = view.findViewById(R.id.stop_btn);
+        Button buttonSave = view.findViewById(R.id.save_btn);
+        Button buttonReset = view.findViewById(R.id.reset_btn);
         View buttonSteps = view.findViewById(R.id.steps_btn);
         buttonSteps.setOnClickListener(v -> setSteps(stepsText.getText().toString()));
         View buttonFileName = view.findViewById(R.id.filename_btn);
         buttonFileName.setOnClickListener(v -> setFileName(fileNameText.getText().toString()));
 
 
-        buttonClear.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Toast.makeText(getContext(),"Clear",Toast.LENGTH_SHORT).show();
-                LineData data = mpLineChart.getData();
-                for (int idx = 0; idx < 3; idx++) {
-                    ILineDataSet set = data.getDataSetByIndex(idx);
-                    data.getDataSetByIndex(idx);
-                    while(set.removeLast()){}
-                }
+        buttonClear.setOnClickListener(v -> {
+            Toast.makeText(getContext(),"Clear",Toast.LENGTH_SHORT).show();
+            LineData data = mpLineChart.getData();
+            for (int idx = 0; idx < 3; idx++) {
+                ILineDataSet set = data.getDataSetByIndex(idx);
+                data.getDataSetByIndex(idx);
+                while(set.removeLast());
             }
         });
 
-        buttonCsvShow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                OpenLoadCSV();
-            }
-        });
+        buttonCsvShow.setOnClickListener(v -> OpenLoadCSV());
 
-        buttonStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickStart();
-            }
-        });
+        buttonStart.setOnClickListener(v -> onClickStart());
 
-        buttonStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickStop();
-            }
-        });
+        buttonStop.setOnClickListener(v -> onClickStop());
 
-        buttonSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickSave();
-            }
-        });
+        buttonSave.setOnClickListener(v -> onClickSave());
 
-        buttonReset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickReset();
-            }
-        });
+        buttonReset.setOnClickListener(v -> onClickReset());
 
         return view;
     }
@@ -309,7 +279,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
             status("connecting...");
             connected = Connected.Pending;
-            SerialSocket socket = new SerialSocket(getActivity().getApplicationContext(), device);
+            SerialSocket socket = new SerialSocket(Objects.requireNonNull(getActivity()).getApplicationContext(), device);
             service.connect(socket);
         } catch (Exception e) {
             onSerialConnectError(e);
@@ -373,10 +343,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     // function to trim blank spaces
                     parts = clean_str(parts);
                     System.out.println(Arrays.toString(parts));
-                    float xValue = Float.valueOf(parts[0]);
-                    float yValue = Float.valueOf(parts[1]);
-                    float zValue = Float.valueOf(parts[2]);
-                    float time = Float.valueOf(parts[3]) / 1000;
+                    float xValue = Float.parseFloat(parts[0]);
+                    float yValue = Float.parseFloat(parts[1]);
+                    float zValue = Float.parseFloat(parts[2]);
+                    float time = Float.parseFloat(parts[3]) / 1000;
 
                     // saving data to csv
 
@@ -450,14 +420,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         experimentData.clear();
     }
 
-    private void onClickSteps() {
-        experimentData.clear();
-    }
-
-    private void onClickFileName() {
-        experimentData.clear();
-    }
-
     private void status(String str) {
         SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
         spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -496,8 +458,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private ArrayList<Entry> emptyDataValues()
     {
-        ArrayList<Entry> dataVals = new ArrayList<Entry>();
-        return dataVals;
+        return new ArrayList<>();
     }
 
     private void OpenLoadCSV(){
