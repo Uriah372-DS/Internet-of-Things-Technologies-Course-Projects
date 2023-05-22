@@ -4,6 +4,7 @@ package com.example.tutorial6;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -19,7 +20,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
-import java.util.List;
+import java.util.HashMap;
 
 
 public class LoadCSV extends AppCompatActivity {
@@ -27,15 +28,28 @@ public class LoadCSV extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_load_csv);
-        Button BackButton = (Button) findViewById(R.id.button_back);
-        LineChart lineChart = (LineChart) findViewById(R.id.line_chart);
+        Button BackButton = findViewById(R.id.button_back);
+        LineChart lineChart = findViewById(R.id.line_chart);
 
-        ArrayList<String[]> csvData = new ArrayList<>();
+        // retrieve fileName from main activity
+        Bundle extras = getIntent().getExtras();
+        String fileName = extras.getString("fileName", "data");
 
-        csvData= CsvRead("/sdcard/csv_dir/data.csv");
-        LineDataSet lineDataSet1 =  new LineDataSet(DataValues(csvData),"temperature");
+        HashMap<String, Object>  csvData = CsvRead("/sdcard/csv_dir/" + fileName + ".csv");
+        LineDataSet lineDataSetX =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC X"), "ACC X");
+        LineDataSet lineDataSetY =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Y"), "ACC Y");
+        LineDataSet lineDataSetZ =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Z"), "ACC Z");
+        lineDataSetX.setColor(Color.RED);
+        lineDataSetX.setCircleColors(Color.RED);
+        lineDataSetY.setColor(Color.BLUE);
+        lineDataSetY.setCircleColors(Color.BLUE);
+        lineDataSetZ.setColor(Color.GREEN);
+        lineDataSetZ.setCircleColors(Color.GREEN);
+
         ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(lineDataSet1);
+        dataSets.add(lineDataSetX);
+        dataSets.add(lineDataSetY);
+        dataSets.add(lineDataSetZ);
         LineData data = new LineData(dataSets);
         lineChart.setData(data);
         lineChart.invalidate();
@@ -51,26 +65,45 @@ public class LoadCSV extends AppCompatActivity {
         });
     }
 
-    private void ClickBack(){
+    private void ClickBack() {
         finish();
-
     }
 
-    private ArrayList<String[]> CsvRead(String path){
-        ArrayList<String[]> CsvData = new ArrayList<>();
+    private HashMap<String, Object> CsvRead(String path) {
+        HashMap<String, Object> experimentData = new HashMap<>();
+        ArrayList<Entry> accX = new ArrayList<>();
+        ArrayList<Entry> accY = new ArrayList<>();
+        ArrayList<Entry> accZ = new ArrayList<>();
+        experimentData.put("ACC X", accX);
+        experimentData.put("ACC Y", accY);
+        experimentData.put("ACC Z", accZ);
         try {
             File file = new File(path);
             CSVReader reader = new CSVReader(new FileReader(file));
-            String[]nextline;
-            while((nextline = reader.readNext())!= null){
-                if(nextline != null){
-                    CsvData.add(nextline);
-
+            String[] nextline;
+            int rowNumber = 0;
+            while((nextline = reader.readNext()) != null) {
+                if(nextline != null) {
+                    if (rowNumber < 3) {
+                        experimentData.put(nextline[0], nextline[1]);
+                    }
+                    if (rowNumber == 3)
+                        experimentData.put(nextline[0], Integer.parseInt(nextline[1]));
+                    if (rowNumber >= 7) {
+                        float t = Float.parseFloat(nextline[0]);
+                        float xValue = Float.parseFloat(nextline[1]);
+                        float yValue = Float.parseFloat(nextline[2]);
+                        float zValue = Float.parseFloat(nextline[3]);
+                        accX.add(new Entry(t, xValue));
+                        accY.add(new Entry(t, yValue));
+                        accZ.add(new Entry(t, zValue));
+                    }
                 }
+                rowNumber++;
             }
 
-        }catch (Exception e){}
-        return CsvData;
+        }catch (Exception ignored){}
+        return experimentData;
     }
 
     private ArrayList<Entry> DataValues(ArrayList<String[]> csvData){

@@ -11,10 +11,8 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -55,14 +53,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     // added experiment variables:
     private ArrayList<String[]> experimentData;
-    private boolean recording = false;
-    private final boolean running = false;
+    private boolean started = false;
+    private boolean stopped = false;
+    private float startTime = 0;
+    private float time = 0;
+    private boolean running = false;
     private int steps;
     private String fileName;
     private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-    private TextView receiveText;
-    private TextView sendText;
+    //    private TextView receiveText;
+//    private TextView sendText;
     private TextView stepsText;
     private TextView fileNameText;
     private TextUtil.HexWatcher hexWatcher;
@@ -160,29 +161,32 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
-        receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
-        receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
-        receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
+//        receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
+//        receiveText.setTextColor(getResources().getColor(R.color.colorReceiveText)); // set as default color to reduce number of spans
+//        receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
         experimentData = new ArrayList<>();
 
-        sendText = view.findViewById(R.id.send_text);
+        //sendText = view.findViewById(R.id.send_text);
         stepsText = view.findViewById(R.id.steps_text);
         fileNameText = view.findViewById(R.id.filename_text);
-        hexWatcher = new TextUtil.HexWatcher(sendText);
-        hexWatcher.enable(hexEnabled);
-        sendText.addTextChangedListener(hexWatcher);
-        sendText.setHint(hexEnabled ? "HEX mode" : "");
+        //hexWatcher = new TextUtil.HexWatcher(sendText);
+        //hexWatcher.enable(hexEnabled);
+        //sendText.addTextChangedListener(hexWatcher);
+        //sendText.setHint(hexEnabled ? "HEX mode" : "");
 
-        View sendBtn = view.findViewById(R.id.send_btn);
-        sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
+        //View sendBtn = view.findViewById(R.id.send_btn);
+        //sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
         mpLineChart = view.findViewById(R.id.line_chart);
         lineDataSetX =  new LineDataSet(emptyDataValues(), "ACC X");
         lineDataSetY =  new LineDataSet(emptyDataValues(), "ACC Y");
         lineDataSetZ =  new LineDataSet(emptyDataValues(), "ACC Z");
         lineDataSetX.setColor(Color.RED);
+        lineDataSetX.setCircleColors(Color.RED);
         lineDataSetY.setColor(Color.BLUE);
+        lineDataSetY.setCircleColors(Color.BLUE);
         lineDataSetZ.setColor(Color.GREEN);
+        lineDataSetZ.setCircleColors(Color.GREEN);
 
         dataSets.add(lineDataSetX);
         dataSets.add(lineDataSetY);
@@ -197,10 +201,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Button buttonStop = view.findViewById(R.id.stop_btn);
         Button buttonSave = view.findViewById(R.id.save_btn);
         Button buttonReset = view.findViewById(R.id.reset_btn);
-        View buttonSteps = view.findViewById(R.id.steps_btn);
-        buttonSteps.setOnClickListener(v -> setSteps(stepsText.getText().toString()));
-        View buttonFileName = view.findViewById(R.id.filename_btn);
-        buttonFileName.setOnClickListener(v -> setFileName(fileNameText.getText().toString()));
+        Button checkBoxRunning = view.findViewById(R.id.cb_running);
+        Button checkBoxWalking = view.findViewById(R.id.cb_walking);
+        //View buttonSteps = view.findViewById(R.id.steps_btn);
+        //buttonSteps.setOnClickListener(v -> setSteps(stepsText.getText().toString()));
+        //View buttonFileName = view.findViewById(R.id.filename_btn);
+        //buttonFileName.setOnClickListener(v -> setFileName(fileNameText.getText().toString()));
 
 
         buttonClear.setOnClickListener(v -> {
@@ -223,6 +229,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         buttonReset.setOnClickListener(v -> onClickReset());
 
+        checkBoxRunning.setOnClickListener(v -> onClickRunning());
+
+        checkBoxWalking.setOnClickListener(v -> onclickWalking());
+
         return view;
     }
 
@@ -236,7 +246,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.clear) {
-            receiveText.setText("");
+//            receiveText.setText("");
             return true;
         } else if (id == R.id.newline) {
             String[] newlineNames = getResources().getStringArray(R.array.newline_names);
@@ -252,9 +262,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return true;
         } else if (id == R.id.hex) {
             hexEnabled = !hexEnabled;
-            sendText.setText("");
+            //sendText.setText("");
             hexWatcher.enable(hexEnabled);
-            sendText.setHint(hexEnabled ? "HEX mode" : "");
+            //sendText.setHint(hexEnabled ? "HEX mode" : "");
             item.setChecked(hexEnabled);
             return true;
         } else {
@@ -266,8 +276,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
      * Serial + UI
      */
     private String[] clean_str(String[] stringsArr){
-         for (int i = 0; i < stringsArr.length; i++)  {
-             stringsArr[i]=stringsArr[i].replaceAll(" ","");
+        for (int i = 0; i < stringsArr.length; i++)  {
+            stringsArr[i]=stringsArr[i].replaceAll(" ","");
         }
 
 
@@ -315,7 +325,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
             SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
             spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            receiveText.append(spn);
+//            receiveText.append(spn);
             service.write(data);
         } catch (Exception e) {
             onSerialIoError(e);
@@ -323,10 +333,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void receive(byte[] message) {
-        System.out.println("receive call:");
+        System.out.println("Receive Call:");
 
         if(hexEnabled) {
-            receiveText.append(TextUtil.toHexString(message) + '\n');
+//            receiveText.append(TextUtil.toHexString(message) + '\n');
         }
         else {
             String msg = new String(message);
@@ -346,13 +356,16 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     float xValue = Float.parseFloat(parts[0]);
                     float yValue = Float.parseFloat(parts[1]);
                     float zValue = Float.parseFloat(parts[2]);
-                    float time = Float.parseFloat(parts[3]) / 1000;
+                    time = Float.parseFloat(parts[3]) / 1000;
 
                     // saving data to csv
 
                     // parse string values, in this case [0] is tmp & [1] is count (t)
-                    String[] row = new String[]{String.valueOf(time), parts[0], parts[1], parts[2]};
-                    if (recording) {
+                    String[] row = new String[]{String.valueOf(time - startTime),
+                            parts[0],
+                            parts[1],
+                            parts[2]};
+                    if (started) {
                         experimentData.add(row);
                     }
 
@@ -368,62 +381,83 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                 }
 
-                msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
-
-                // send msg to function that saves it to csv
-                // special handling if CR and LF come in separate fragments
-                if (pendingNewline && msg.charAt(0) == '\n') {
-                    Editable edt = receiveText.getEditableText();
-                    if (edt != null && edt.length() > 1)
-                        edt.replace(edt.length() - 2, edt.length(), "");
-                }
-                pendingNewline = msg.charAt(msg.length() - 1) == '\r';
+//                msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
+//
+//                // send msg to function that saves it to csv
+//                // special handling if CR and LF come in separate fragments
+//                if (pendingNewline && msg.charAt(0) == '\n') {
+//                    Editable edt = receiveText.getEditableText();
+//                    if (edt != null && edt.length() > 1)
+//                        edt.replace(edt.length() - 2, edt.length(), "");
+//                }
+//                pendingNewline = msg.charAt(msg.length() - 1) == '\r';
             }
-            receiveText.append(msg + "\n");
+//            receiveText.append(msg + "\n");
 //            receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
         }
     }
 
     private void onClickStart() {
-        recording = true;
+        startTime = time;
+        started = true;
+        Toast.makeText(getActivity(), "Started Recording!", Toast.LENGTH_SHORT).show();
     }
 
     private void onClickStop() {
-        recording = false;
+        stopped = true;
+        Toast.makeText(getActivity(), "Stopped Recording!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void onClickRunning() {
+        running = true;
+    }
+    private void onclickWalking() {
+        running = false;
     }
 
     private void onClickSave() {
-        try {
-            // create new csv unless file already exists
-            File file = new File("/sdcard/csv_dir/");
-            file.mkdirs();
-            String csv = "/sdcard/csv_dir/" + fileName + ".csv";
-            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
-            csvWriter.writeNext(new String[]{"NAME:", fileName + ".csv"});
-            csvWriter.writeNext(new String[]{"EXPERIMENT TIME:", formatter.format(new Date())});
-            csvWriter.writeNext(new String[]{"ACTIVITY TYPE:", running ? "Running" : "Walking"});
-            csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", String.valueOf(steps)});
-            csvWriter.writeNext(new String[]{});
-            csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
+        if (!(started && stopped)) {
+            Toast.makeText(getActivity(), "No Experiment Was Recorded", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            try {
+                // create new csv unless file already exists
+                fileName = fileNameText.getText().toString();
+                steps = Integer.parseInt(stepsText.getText().toString());
+                File file = new File("/sdcard/csv_dir/");
+                file.mkdirs();
+                String csv = "/sdcard/csv_dir/" + fileName + ".csv";
+                CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
+                csvWriter.writeNext(new String[]{"NAME:", fileName + ".csv"});
+                csvWriter.writeNext(new String[]{"EXPERIMENT TIME:", formatter.format(new Date())});
+                csvWriter.writeNext(new String[]{"ACTIVITY TYPE:", running ? "Running" : "Walking"});
+                csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", String.valueOf(steps)});
+                csvWriter.writeNext(new String[]{});
+                csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
 
-            for (String[] row : experimentData) {
-                csvWriter.writeNext(row);
+                for (String[] row : experimentData) {
+                    csvWriter.writeNext(row);
+                }
+                csvWriter.close();
+                onClickReset();  // Reset the recording
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            csvWriter.close();
-            onClickReset();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Toast.makeText(getActivity(), "Saved Recording to " + fileName + ".csv", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void onClickReset() {
         experimentData.clear();
+        started = false;
+        stopped = false;
+
     }
 
     private void status(String str) {
         SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
         spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        receiveText.append(spn);
+//        receiveText.append(spn);
     }
 
     /*
@@ -444,7 +478,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onSerialRead(byte[] data) {
         try {
-        receive(data);}
+            receive(data);}
         catch (Exception e) {
             e.printStackTrace();
         }
@@ -462,7 +496,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void OpenLoadCSV(){
-        Intent intent = new Intent(getContext(),LoadCSV.class);
+        Intent intent = new Intent(getContext(), LoadCSV.class);
+        intent.putExtra("fileName", fileName);
         startActivity(intent);
     }
 
