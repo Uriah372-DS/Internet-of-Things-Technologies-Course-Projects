@@ -11,8 +11,10 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +63,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private boolean running = false;
     private int steps;
     private String fileName;
+    private ArrayList<String> fileNames;
     private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     //    private TextView receiveText;
@@ -162,7 +166,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
 //        receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
-//        receiveText.setTextColor(getResources().getColor(R.color.colorReceiveText)); // set as default color to reduce number of spans
+//        receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
 //        receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
         experimentData = new ArrayList<>();
 
@@ -439,6 +443,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     csvWriter.writeNext(row);
                 }
                 csvWriter.close();
+                fileNames.add(fileName);
                 onClickReset();  // Reset the recording
             } catch (IOException e) {
                 e.printStackTrace();
@@ -497,8 +502,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void OpenLoadCSV(){
         Intent intent = new Intent(getContext(), LoadCSV.class);
-        intent.putExtra("fileName", fileName);
+        intent.putExtra("fileNames", fileNames);
         startActivity(intent);
     }
-
 }

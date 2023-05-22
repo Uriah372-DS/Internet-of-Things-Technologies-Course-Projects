@@ -11,6 +11,22 @@
         android:layout_width="match_parent"
         android:layout_height="320dp"
         android:background="@color/white" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Please select the experiment to display:" />
+
+        <Spinner
+            android:id="@+id/saved_experiments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/button_back"

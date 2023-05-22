@@ -3,11 +3,16 @@ package com.example.tutorial6;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -24,37 +29,53 @@ import java.util.HashMap;
 
 
 public class LoadCSV extends AppCompatActivity {
+    private LineChart lineChart;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_load_csv);
         Button BackButton = findViewById(R.id.button_back);
-        LineChart lineChart = findViewById(R.id.line_chart);
+        lineChart = findViewById(R.id.line_chart);
 
         // retrieve fileName from main activity
         Bundle extras = getIntent().getExtras();
-        String fileName = extras.getString("fileName", "data");
+        String[] fileNames = extras.getStringArray("fileNames");
 
-        HashMap<String, Object>  csvData = CsvRead("/sdcard/csv_dir/" + fileName + ".csv");
-        LineDataSet lineDataSetX =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC X"), "ACC X");
-        LineDataSet lineDataSetY =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Y"), "ACC Y");
-        LineDataSet lineDataSetZ =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Z"), "ACC Z");
-        lineDataSetX.setColor(Color.RED);
-        lineDataSetX.setCircleColors(Color.RED);
-        lineDataSetY.setColor(Color.BLUE);
-        lineDataSetY.setCircleColors(Color.BLUE);
-        lineDataSetZ.setColor(Color.GREEN);
-        lineDataSetZ.setCircleColors(Color.GREEN);
+        Spinner spinner = findViewById(R.id.saved_experiments);
 
-        ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(lineDataSetX);
-        dataSets.add(lineDataSetY);
-        dataSets.add(lineDataSetZ);
-        LineData data = new LineData(dataSets);
-        lineChart.setData(data);
-        lineChart.invalidate();
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>
+                (this, android.R.layout.simple_spinner_item,
+                        fileNames);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout
+                .simple_spinner_dropdown_item);
+        spinner.setAdapter(spinnerArrayAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                String fileName = (String) parent.getItemAtPosition(pos);
+                HashMap<String, Object>  csvData = CsvRead("/sdcard/csv_dir/" + fileName + ".csv");
+                LineDataSet lineDataSetX =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC X"), "ACC X");
+                LineDataSet lineDataSetY =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Y"), "ACC Y");
+                LineDataSet lineDataSetZ =  new LineDataSet((ArrayList<Entry>) csvData.get("ACC Z"), "ACC Z");
+                lineDataSetX.setColor(Color.RED);
+                lineDataSetX.setCircleColors(Color.RED);
+                lineDataSetY.setColor(Color.BLUE);
+                lineDataSetY.setCircleColors(Color.BLUE);
+                lineDataSetZ.setColor(Color.GREEN);
+                lineDataSetZ.setCircleColors(Color.GREEN);
 
+                ArrayList<ILineDataSet> dataSets = new ArrayList<>();
+                dataSets.add(lineDataSetX);
+                dataSets.add(lineDataSetY);
+                dataSets.add(lineDataSetZ);
+                LineData data = new LineData(dataSets);
+                lineChart.setData(data);
+                lineChart.invalidate();
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
 
 
         BackButton.setOnClickListener(new View.OnClickListener() {
@@ -106,17 +127,16 @@ public class LoadCSV extends AppCompatActivity {
         return experimentData;
     }
 
-    private ArrayList<Entry> DataValues(ArrayList<String[]> csvData){
-        ArrayList<Entry> dataVals = new ArrayList<Entry>();
-        for (int i = 0; i < csvData.size(); i++){
-
-            dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[1]),
-                    Float.parseFloat(csvData.get(i)[0])));
-
-
-        }
-
-        return dataVals;
-    }
-
+//    private ArrayList<Entry> DataValues(ArrayList<String[]> csvData){
+//        ArrayList<Entry> dataVals = new ArrayList<Entry>();
+//        for (int i = 0; i < csvData.size(); i++){
+//
+//            dataVals.add(new Entry(Integer.parseInt(csvData.get(i)[1]),
+//                    Float.parseFloat(csvData.get(i)[0])));
+//
+//
+//        }
+//
+//        return dataVals;
+//    }
 }
