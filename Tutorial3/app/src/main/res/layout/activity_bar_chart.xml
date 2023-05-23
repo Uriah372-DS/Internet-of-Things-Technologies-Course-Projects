@@ -17,4 +17,10 @@
         android:layout_height="wrap_content"
         android:text="To Main" />
 
+    <Button
+        android:id="@+id/button_csv_show"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Load CSV" />
+
 </LinearLayout>

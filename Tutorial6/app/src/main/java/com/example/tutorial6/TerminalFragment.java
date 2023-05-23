@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,7 +56,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private SerialService service;
 
     // added experiment variables:
-    private ArrayList<String[]> experimentData;
+    private ArrayList<float[]> experimentData;
     private boolean started = false;
     private boolean stopped = false;
     private float startTime = 0;
@@ -63,7 +64,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private boolean running = false;
     private int steps;
     private String fileName;
-    private ArrayList<String> fileNames;
+//    private ArrayList<String> fileNames;
     private final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     //    private TextView receiveText;
@@ -169,6 +170,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 //        receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
 //        receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
         experimentData = new ArrayList<>();
+//        fileNames = new ArrayList<>();
 
         //sendText = view.findViewById(R.id.send_text);
         stepsText = view.findViewById(R.id.steps_text);
@@ -205,8 +207,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Button buttonStop = view.findViewById(R.id.stop_btn);
         Button buttonSave = view.findViewById(R.id.save_btn);
         Button buttonReset = view.findViewById(R.id.reset_btn);
-        Button checkBoxRunning = view.findViewById(R.id.cb_running);
-        Button checkBoxWalking = view.findViewById(R.id.cb_walking);
+        Button radioRunning = view.findViewById(R.id.radio_running);
+        Button radioWalking = view.findViewById(R.id.radio_walking);
         //View buttonSteps = view.findViewById(R.id.steps_btn);
         //buttonSteps.setOnClickListener(v -> setSteps(stepsText.getText().toString()));
         //View buttonFileName = view.findViewById(R.id.filename_btn);
@@ -233,9 +235,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         buttonReset.setOnClickListener(v -> onClickReset());
 
-        checkBoxRunning.setOnClickListener(v -> onClickRunning());
+        radioRunning.setOnClickListener(this::onRadioButtonClicked);
 
-        checkBoxWalking.setOnClickListener(v -> onclickWalking());
+        radioWalking.setOnClickListener(this::onRadioButtonClicked);
 
         return view;
     }
@@ -337,7 +339,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void receive(byte[] message) {
-        System.out.println("Receive Call:");
+//        System.out.println("Receive Call:");
 
         if(hexEnabled) {
 //            receiveText.append(TextUtil.toHexString(message) + '\n');
@@ -356,7 +358,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     String[] parts = msg_to_save.split(",");
                     // function to trim blank spaces
                     parts = clean_str(parts);
-                    System.out.println(Arrays.toString(parts));
+//                    System.out.println(Arrays.toString(parts));
                     float xValue = Float.parseFloat(parts[0]);
                     float yValue = Float.parseFloat(parts[1]);
                     float zValue = Float.parseFloat(parts[2]);
@@ -365,10 +367,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     // saving data to csv
 
                     // parse string values, in this case [0] is tmp & [1] is count (t)
-                    String[] row = new String[]{String.valueOf(time - startTime),
-                            parts[0],
-                            parts[1],
-                            parts[2]};
+                    float[] row = new float[]{time - startTime,
+                            xValue,
+                            yValue,
+                            zValue};
                     if (started) {
                         experimentData.add(row);
                     }
@@ -412,11 +414,23 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Toast.makeText(getActivity(), "Stopped Recording!", Toast.LENGTH_SHORT).show();
     }
 
-    private void onClickRunning() {
-        running = true;
-    }
-    private void onclickWalking() {
-        running = false;
+    public void onRadioButtonClicked(View view) {
+        // Is the button now checked?
+        boolean checked = ((RadioButton) view).isChecked();
+
+        // Check which radio button was clicked
+        switch(view.getId()) {
+            case R.id.radio_walking:
+                if (checked) {
+                    running = false;
+                    break;
+                }
+            case R.id.radio_running:
+                if (checked) {
+                    running = true;
+                    break;
+                }
+        }
     }
 
     private void onClickSave() {
@@ -438,12 +452,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", String.valueOf(steps)});
                 csvWriter.writeNext(new String[]{});
                 csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
-
-                for (String[] row : experimentData) {
-                    csvWriter.writeNext(row);
+                startTime = experimentData.get(0)[0];
+                for (float[] row : experimentData) {
+                    row[0] = row[0] - startTime;
+                    String[] stringRow = new String[]{String.valueOf(row[0]),
+                            String.valueOf(row[1]),
+                            String.valueOf(row[2]),
+                            String.valueOf(row[3])};
+                    csvWriter.writeNext(stringRow);
                 }
                 csvWriter.close();
-                fileNames.add(fileName);
+//                fileNames.add(fileName);
                 onClickReset();  // Reset the recording
             } catch (IOException e) {
                 e.printStackTrace();
@@ -502,7 +521,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void OpenLoadCSV(){
         Intent intent = new Intent(getContext(), LoadCSV.class);
-        intent.putExtra("fileNames", fileNames);
         startActivity(intent);
     }
 }
