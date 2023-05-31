@@ -30,6 +30,7 @@ public class LoadCSV extends AppCompatActivity {
         setContentView(R.layout.activity_load_csv);
 
         Button BackButton = (Button) findViewById(R.id.button_back);
+        Button barChartButton = (Button) findViewById(R.id.button_bar_chart);
         LineChart lineChart = (LineChart) findViewById(R.id.line_chart);
 
 
@@ -51,14 +52,22 @@ public class LoadCSV extends AppCompatActivity {
 
         BackButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { ClickBack(); }
+            public void onClick(View v) { openMain(); }
+        });
+        barChartButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { openBarChart(); }
         });
     }
 
-    private void ClickBack(){
+    private void openMain(){
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+    }
 
+    private void openBarChart(){
+        Intent intent = new Intent(this, barChartMeanStd.class);
+        startActivity(intent);
     }
 
     protected static ArrayList<String[]> CsvRead(String path){

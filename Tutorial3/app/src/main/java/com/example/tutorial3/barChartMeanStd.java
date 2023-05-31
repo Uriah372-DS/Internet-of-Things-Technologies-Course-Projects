@@ -1,23 +1,14 @@
 package com.example.tutorial3;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
@@ -25,21 +16,14 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
-import com.opencsv.CSVWriter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 public class barChartMeanStd extends AppCompatActivity {
     BarChart mpBar;
-    Button back;
+    Button toMain;
+    Button openCSV;
 
     public barChartMeanStd() throws FileNotFoundException { }
 
@@ -49,10 +33,17 @@ public class barChartMeanStd extends AppCompatActivity {
         setContentView(R.layout.activity_bar_chart);
 
         mpBar = (BarChart) findViewById(R.id.bar_chart);
-        back = (Button) findViewById(R.id.button_back);
-        back.setOnClickListener(new View.OnClickListener() {
+        toMain = (Button) findViewById(R.id.button_back);
+        openCSV = (Button) findViewById(R.id.button_csv_show);
+
+        toMain.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) { ClickBack(); }
+            public void onClick(View v) { openMain(); }
+        });
+
+        openCSV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { openCSVShow(); }
         });
 
         // read the data:
@@ -121,8 +112,14 @@ public class barChartMeanStd extends AppCompatActivity {
         return (float) (Math.sqrt(sum) / data.size());
     }
 
-    private void ClickBack(){
+    private void openMain(){
         Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+
+    }
+
+    private void openCSVShow(){
+        Intent intent = new Intent(this, LoadCSV.class);
         startActivity(intent);
 
     }

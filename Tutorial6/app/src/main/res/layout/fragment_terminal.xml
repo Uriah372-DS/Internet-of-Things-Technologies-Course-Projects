@@ -48,7 +48,7 @@
             android:layout_weight="1"
             android:inputType="text|textNoSuggestions"
             android:singleLine="true"
-            android:hint="Please set the number of steps"/>
+            android:hint="Please Set The Number Of Steps"/>
     </LinearLayout>
 
     <LinearLayout
@@ -63,7 +63,7 @@
             android:layout_weight="1"
             android:inputType="text|textNoSuggestions"
             android:singleLine="true"
-            android:hint="Please set the name of file"/>
+            android:hint="Please Set The Name Of The File"/>
     </LinearLayout>
 
     <LinearLayout
@@ -77,16 +77,19 @@
             android:layout_height="wrap_content"
             android:text="Choose Activity:    "/>
 
-        <CheckBox
-            android:id="@+id/cb_walking"
+        <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="Walking"/>
-        <CheckBox
-            android:id="@+id/cb_running"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:text="Running"/>
+            android:orientation="horizontal">
+            <RadioButton android:id="@+id/radio_walking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Walking"/>
+            <RadioButton android:id="@+id/radio_running"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Running"/>
+        </RadioGroup>
     </LinearLayout>
 
     <View
@@ -104,28 +107,28 @@
             android:id="@+id/start_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
             android:text="start" />
 
         <Button
             android:id="@+id/stop_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
             android:text="stop" />
 
         <Button
             android:id="@+id/save_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
             android:text="save" />
 
         <Button
             android:id="@+id/reset_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="6dp"
+            android:layout_weight="1"
             android:text="reset" />
 
     </LinearLayout>

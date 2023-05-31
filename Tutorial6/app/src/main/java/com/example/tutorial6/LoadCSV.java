@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 
 public class LoadCSV extends AppCompatActivity {
@@ -38,8 +39,8 @@ public class LoadCSV extends AppCompatActivity {
         lineChart = findViewById(R.id.line_chart);
 
         // retrieve fileName from main activity
-        Bundle extras = getIntent().getExtras();
-        String[] fileNames = extras.getStringArray("fileNames");
+        ArrayList<String> fileNames = readFileNames();
+        System.out.println(fileNames.toArray().toString());
 
         Spinner spinner = findViewById(R.id.saved_experiments);
 
@@ -84,6 +85,21 @@ public class LoadCSV extends AppCompatActivity {
                 ClickBack();
             }
         });
+    }
+
+    private ArrayList<String> readFileNames() {
+        File folder = new File("/sdcard/csv_dir/");
+        File[] listOfFiles = folder.listFiles();
+        ArrayList<String> fNames = new ArrayList<>();
+        if (listOfFiles == null)
+            return fNames;
+
+        for (int i = 0; i < Objects.requireNonNull(listOfFiles).length; i++) {
+            if (listOfFiles[i].isFile()) {
+                fNames.add(listOfFiles[i].getName().replace(".csv", ""));
+            }
+        }
+        return fNames;
     }
 
     private void ClickBack() {
