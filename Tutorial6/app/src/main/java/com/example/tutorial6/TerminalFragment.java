@@ -337,7 +337,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void receive(byte[] message) {
-        System.out.println("Receive Call:");
+//        System.out.println("Receive Call:");
 
         if(hexEnabled) {
 //            receiveText.append(TextUtil.toHexString(message) + '\n');
@@ -349,18 +349,18 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 String msg_to_save = msg.replace(TextUtil.newline_crlf, TextUtil.emptyString);
                 msg_to_save = msg_to_save.replace(TextUtil.newline_lf, TextUtil.emptyString);
                 msg_to_save = msg_to_save.replace("\r", TextUtil.emptyString);
-                System.out.println(msg_to_save);
+//                System.out.println(msg_to_save);
                 // check message length
                 if (msg_to_save.length() > 1) {
                     // split message string by ',' char
                     String[] parts = msg_to_save.split(",");
                     // function to trim blank spaces
                     parts = clean_str(parts);
-                    System.out.println(Arrays.toString(parts));
+//                    System.out.println(Arrays.toString(parts));
                     float xValue = Float.parseFloat(parts[0]);
                     float yValue = Float.parseFloat(parts[1]);
                     float zValue = Float.parseFloat(parts[2]);
-                    time = Float.parseFloat(parts[3]) / 1000;
+                    time = (Float.parseFloat(parts[3]) / 1000);
 
                     // saving data to csv
 
@@ -428,6 +428,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 // create new csv unless file already exists
                 fileName = fileNameText.getText().toString();
                 steps = Integer.parseInt(stepsText.getText().toString());
+                System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\nfileName: " + fileName);
+                System.out.println("steps: " + steps + "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+                Toast.makeText(getActivity(), "saving into " + fileName + ".csv " + steps + " steps", Toast.LENGTH_SHORT).show();
                 File file = new File("/sdcard/csv_dir/");
                 file.mkdirs();
                 String csv = "/sdcard/csv_dir/" + fileName + ".csv";
